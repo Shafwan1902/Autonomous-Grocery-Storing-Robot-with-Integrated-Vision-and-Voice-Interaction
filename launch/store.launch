@@ -1,0 +1,89 @@
+<launch>
+    <include file="$(find jupiterobot2_bringup)/launch/jupiterobot2_bringup.launch"/>
+    <include file="$(find jupiterobot2_bringup)/launch/arm_head_bringup.launch"/>
+    <!-- <include file="$(find jupiterobot2_arm_bringup)/launch/arm.launch"/> -->
+    <include file="$(find astra_camera)/launch/astra.launch"/>
+
+    <arg name="input_image_topic" default="/camera/color/image_raw"/>
+    <arg name="detect_mode" default="0">
+        <description>Detection mode (0, 1, 2, or 3)</description>
+    </arg>
+    <node pkg="store" type ="mediapipe_pose.py"  name="mediapipe_pose">
+        <param name="detect_mode" value="$(arg detect_mode)"/>
+        <param name="image_topic" value="$(arg input_image_topic)"/>
+    </node>
+
+    <!-- <node name="luggage_detection" pkg="store" type="luggage_detection.py" respawn="false" output="screen" /> -->
+
+    <!-- Arguments -->
+    <arg name="map_file" default="/home/mustar/catkin_ws/maps/store.yaml"/>
+    <arg name="open_rviz" default="true"/>
+    <arg name="move_forward_only" default="false"/>
+
+    <!-- Map server -->
+    <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
+
+    <!-- AMCL -->
+    <include file="$(find jupiterobot2_navigation)/launch/includes/amcl.launch"/>
+
+    <!-- move_base -->
+    <include file="$(find jupiterobot2_navigation)/launch/includes/move_base.launch">
+        <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+    </include>
+
+
+
+    <node name="human_range_finder" pkg="store" type="human_range_finder.py" respawn="true" output="screen" />
+    
+    <!-- <node name="robot_movement" pkg="store" type="luggage_range_finder.py" respawn="false" output="screen" /> -->
+
+    <!-- <node name="frame_transformer" pkg="store" type="frame_transformer.py" respawn="false" output="screen" /> -->
+
+    <!-- Object detection node -->
+    <node name="object_detection" pkg="store" type="seat_detection.py" respawn="false" output="screen">
+        <param name="image_topic" value="/camera/color/image_raw"/>
+        <param name="image_topic" value="camera/depth/image_raw"/>
+    </node>
+
+    <!-- <node name="object_detection_human" pkg="store" type="object_detection.py" respawn="false" output="screen">
+        <param name="image_topic" value="/camera/color/image_raw"/>
+    </node>
+     -->
+    <!-- <include file="$(find jupiterobot2_moveit_config)/launch/move_group.launch"/> -->
+
+     <!-- <node name="human_centroid" pkg="store" type="human_centroid.py" respawn="false" output="screen"/> -->
+
+    <!-- Frame transformer node -->
+    <!-- <node name="frame_transformer" pkg="store" type="frame_transformer.py" respawn="false" output="screen"/> -->
+
+    <!-- Position filter node -->
+    <!-- <node name="position_filter" pkg="store" type="position_filter.py" respawn="false" output="screen"/> -->
+
+    <!-- Person marker node -->
+    <!-- <node name="person_marker" pkg="store" type="person_marker.py" respawn="false" output="screen"/> -->
+
+    <!-- <node name="seat_detection" pkg="store" type="arm_controller.py" respawn="true" output="screen" /> -->
+
+    <node name="text2speach" pkg="store" type="text2speach.py" respawn="false" output="screen" />
+
+    <node name="speach2text" pkg="store" type="speach2text.py" respawn="false" output="screen" />
+
+    <!-- Launch the Follower node -->
+    <node name="jupiterobot2_follower" pkg="jupiterobot2_follower" type="jupiterobot2_follower" output="screen">
+        <!-- Add any necessary parameters here -->
+    </node>
+
+
+
+    <!-- rviz -->
+    <group if="$(arg open_rviz)"> 
+        <node pkg="rviz" type="rviz" name="rviz" required="true"
+            args="-d $(find store)/rviz/store.rviz"/>
+    </group>
+
+
+
+
+
+
+</launch>
